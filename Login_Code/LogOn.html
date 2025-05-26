@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link rel="icon" href="/imagenes/logo_shortcut.png">
+  <link rel="icon" href="../imagenes/logo_shortcut.png">
   <title>Iniciar Sesión</title>
   <style>
     * {
@@ -102,7 +102,7 @@
       const usuario = JSON.parse(localStorage.getItem("usuarioRegistrado"));
 
       if (usuario && usuario.correo === correo && usuario.password === password) {
-        window.location.href = "/Dashboard/dashboard.html";
+        window.location.href = "../Dashboard/dashboard.html";
       } else {
         errorMsg.textContent = "Correo o contraseña incorrectos.";
       }
@@ -110,4 +110,3 @@
   </script>
 </body>
 </html>
-
