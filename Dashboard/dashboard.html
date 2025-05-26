@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="icon" href="/imagenes/logo_shortcut.png">
+    <title>Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+
+        :root {
+            --primary-color: #646fda;
+            --sidebar-bg: #E8EAE9;
+            --card-bg: rgb(247, 247, 247);
+            --text-color: rgba(13, 39, 80, 0.8);
+            --text-light: rgba(13, 39, 80, 0.6);
+            --success-color: #28c78f;
+            --danger-color: #ff4d4f;
+        }
+
+        body {
+            background: #E8EAE9;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .Barra_lateral_izquierda {
+            width: 70px;
+            background: #E8EAE9;
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .Iconos_Barra_lateral_izq {
+            width: 50px;
+            height: 50px;
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            box-shadow: rgba(255, 255, 255, 0.64) -8px -8px 12px 0px inset, 
+                        rgba(13, 39, 80, 0.16) 8px 8px 12px 0px inset, 
+                        rgb(255, 255, 255) -8px -8px 12px 0px, 
+                        rgba(13, 39, 80, 0.16) 4px 4px 12px 0px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            font-size: 20px;
+            color: var(--text-color);
+        }
+
+        .Iconos_Barra_lateral_izq:hover {
+            transform: scale(1.05);
+            box-shadow: rgba(255, 255, 255, 0.8) -10px -10px 15px 0px inset, 
+                        rgba(13, 39, 80, 0.2) 10px 10px 15px 0px inset, 
+                        rgb(255, 255, 255) -10px -10px 15px 0px, 
+                        rgba(13, 39, 80, 0.2) 6px 6px 15px 0px;
+        }
+
+        .Iconos_Barra_lateral_izq a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .contenedor_general {
+            flex: 1;
+            padding: 20px;
+        }
+
+        .Contenedor_superior {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .perfil_ususario {
+            background-color: var(--card-bg);
+            border-radius: 25px;
+            box-shadow: rgba(255, 255, 255, 0.64) -10px -10px 15px 0px inset, 
+                        rgba(13, 39, 80, 0.16) 10px 10px 15px 0px inset, 
+                        rgb(255, 255, 255) -10px -10px 15px 0px, 
+                        rgba(13, 39, 80, 0.16) 5px 5px 15px 0px;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .perfil_ususario:hover {
+            transform: scale(1.02);
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #9c6cf2, #646fda);
+            box-shadow: rgba(255, 255, 255, 0.3) -3px -3px 6px 0px inset, 
+                        rgba(0, 0, 0, 0.2) 3px 3px 6px 0px inset;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .nombre_ususario {
+            font-weight: 600;
+            color: var(--text-color);
+            font-size: 16px;
+        }
+
+        .titulo_dashboard {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            color: var(--text-color);
+            text-align: center;
+        }
+
+        .Contenedor_Tarjetas {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+
+        .tarjetas {
+            background-color: var(--card-bg);
+            border-radius: 25px;
+            box-shadow: rgba(255, 255, 255, 0.64) -15px -15px 20px 0px inset, 
+                        rgba(13, 39, 80, 0.16) 15px 15px 20px 0px inset, 
+                        rgb(255, 255, 255) -15px -15px 20px 0px, 
+                        rgba(13, 39, 80, 0.16) 8px 8px 20px 0px;
+            padding: 30px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tarjetas:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: rgba(255, 255, 255, 0.8) -20px -20px 25px 0px inset, 
+                        rgba(13, 39, 80, 0.2) 20px 20px 25px 0px inset, 
+                        rgb(255, 255, 255) -20px -20px 25px 0px, 
+                        rgba(13, 39, 80, 0.2) 12px 12px 25px 0px;
+        }
+
+        .tarjetas::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: rotate(45deg);
+            transition: all 0.5s;
+            opacity: 0;
+        }
+
+        .tarjetas:hover::before {
+            animation: shine 0.8s ease-in-out;
+        }
+
+        @keyframes shine {
+            0% {
+                transform: translateX(-100%) translateY(-100%) rotate(45deg);
+                opacity: 0;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(100%) translateY(100%) rotate(45deg);
+                opacity: 0;
+            }
+        }
+
+        .Tarjetas-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .tarjeta_titulo {
+            font-size: 16px;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .icono_tarjeta {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: linear-gradient(145deg, rgba(100, 111, 218, 0.1), rgba(100, 111, 218, 0.05));
+            box-shadow: rgba(255, 255, 255, 0.5) -5px -5px 8px 0px inset, 
+                        rgba(100, 111, 218, 0.2) 5px 5px 8px 0px inset;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .valor_texto {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 10px;
+        }
+
+        /* Agrega estas reglas CSS para controlar el tamaño de los gráficos */
+
+/* Contenedor de los canvas */
+.valor_texto canvas {
+    max-width: 400px !important;  /* Controla el ancho máximo */
+    max-height: 250px !important; /* Controla la altura máxima */
+    margin: 0 auto;              /* Centra horizontalmente */
+    display: block;              /* Necesario para que funcione el margin auto */
+}
+
+/* Si quieres hacer los gráficos aún más pequeños, cambia estos valores */
+.valor_texto canvas {
+    max-width: 350px !important;  /* Más pequeño */
+    max-height: 200px !important; /* Más pequeño */
+    margin: 0 auto;
+    display: block;
+}
+
+/* Para dispositivos móviles, hacer los gráficos más pequeños */
+@media (max-width: 768px) {
+    .valor_texto canvas {
+        max-width: 280px !important;
+        max-height: 180px !important;
+    }
+}
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .Contenedor_Tarjetas {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .Barra_lateral_izquierda {
+                width: 60px;
+            }
+            
+            .titulo_dashboard {
+                font-size: 24px;
+            }
+        }
+
+        /* Animación de entrada */
+        .tarjetas {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .tarjetas:nth-child(1) { animation-delay: 0.1s; }
+        .tarjetas:nth-child(2) { animation-delay: 0.2s; }
+        .tarjetas:nth-child(3) { animation-delay: 0.3s; }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="Barra_lateral_izquierda">
+        <div class="Iconos_Barra_lateral_izq">
+            <a href="/Facturacion/Gestion_inventario.html"><img src="/imagenes/Inventario_gestion.png" alt="inventario" style="height: 40px;"></a>
+        </div>
+        <div class="Iconos_Barra_lateral_izq">
+            <a href="/Facturacion/Facturacion.html"><img src="/imagenes/Facturacion.png" alt="Facturar" style="height: 30px;"></a>
+        </div>
+    </div>
+    
+    <div class="contenedor_general">
+        <div class="Contenedor_superior">
+            <div class="perfil_ususario">
+                <div class="avatar">Error 404</div>
+                <div class="texto_avatar">
+                    <div class="nombre_ususario">Error 404</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="Contenedor_Dashboard">
+            <div class="titulo_dashboard">Dashboard</div>
+            
+            <div class="Contenedor_Tarjetas">
+                <div class="tarjetas">
+                        <div class="Tarjetas-header">
+                            <div class="tarjeta_titulo">Total - Vendido</div>
+                            <div class="icono_tarjeta">$</div>
+                        </div>
+                        <div class="valor_texto">
+                            <div style="margin-top: 2rem;">
+                                <h3 style="text-align: center;">Total Vendido</h3>
+                                <!--sacar de las ganancias totales las ganancias netas, me refiero a que se sume ese 20% que le gana a todos los productos cuando factura.
+                                quiero que se sumen los valores totales-->
+                                <canvas id="totalVendido" width="600" height="300"></canvas>
+                            </div>
+                        </div>
+                </div>
+                
+                <div class="tarjetas">
+                    <div class="Tarjetas-header">
+                        <div class="tarjeta_titulo">Grafica - Pie</div>
+                        <div class="icono_tarjeta">📈</div>
+                    </div>
+                    <div class="valor_texto">
+                        <div style="margin-top: 2rem;">
+                            <h3 style="text-align: center;">Ganacias Netas</h3>
+                            <!--sacar de las ganancias totales las ganancias netas, me refiero a que se sume ese 20% que le gana a todos los productos cuando factura.
+                            quiero que se sumen los valores totales-->
+                            <canvas id="gananciasNetas" width="600" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tarjetas">
+                    <div class="Tarjetas-header">
+                        <div class="tarjeta_titulo">Gráfica - Barras</div>
+                        <div class="icono_tarjeta">○</div>
+                    </div>
+                    <div class="valor_texto"> 
+                        <div style="margin-top: 2rem;">
+                        <h3 style="text-align: center;">Productos más vendidos</h3>
+                        <canvas id="graficoMasVendidos" width="600" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+   
+      
+
+    <script>
+function formatearParaMostrar(numero) {
+  if (numero === null || numero === undefined || isNaN(numero)) {
+    return '0';
+  }
+  return Math.round(numero).toLocaleString('de-DE');
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+          const usuario = JSON.parse(localStorage.getItem("usuarioRegistrado"));
+      
+          if (usuario) {
+            const nombreCompleto = `${usuario.nombre} ${usuario.apellido}`;
+            const inicial = usuario.nombre.charAt(0).toUpperCase();
+      
+            // Cambiar nombre y avatar
+            document.querySelector(".nombre_ususario").textContent = nombreCompleto;
+            document.querySelector(".avatar").textContent = inicial;
+          } else {
+            // Si no hay usuario, redirigir a login
+            window.location.href = "/Login_Code/LogOn.html";
+          }
+        });
+      </script>
+
+<!--este es espacio para los graficos del chart.js-->
+
+<script>
+    window.addEventListener("DOMContentLoaded", () => {
+      const historial = JSON.parse(localStorage.getItem('historialVentasHS')) || [];
+    
+        
+
+      // Agrupar productos por cantidad total vendida
+      const contador = {};
+      historial.forEach(venta => {
+        if (!contador[venta.codigo]) {
+          contador[venta.codigo] = {
+            nombre: venta.nombre,
+            cantidad: 0
+          };
+        }
+        contador[venta.codigo].cantidad += venta.cantidad;
+      });
+    
+      const labels = Object.values(contador).map(p => p.nombre);
+      const data = Object.values(contador).map(p => p.cantidad);
+    
+      const ctx = document.getElementById('graficoMasVendidos').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Cantidad Vendida',
+            data: data,
+            backgroundColor: 'rgba(100, 111, 218, 0.6)',
+            borderColor: 'rgba(100, 111, 218, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true,
+              precision: 0
+            }
+          }
+        }
+      });
+    });
+    </script>
+    
+<!--aqui termina el chart.js-->
+
+<script>
+    // Código JavaScript para los gráficos del Dashboard
+// Agregar este código después del script existente de Chart.js
+
+// Gráfico de Total Vendido (Línea por fechas)
+window.addEventListener("DOMContentLoaded", () => {
+  const historial = JSON.parse(localStorage.getItem('historialVentasHS')) || [];
+  const catalogoHS = JSON.parse(localStorage.getItem('catalogoHS')) || {};
+  
+  // Agrupar ventas por fecha y calcular total vendido por día
+  const ventasPorFecha = {};
+  
+  historial.forEach(venta => {
+    const fecha = venta.fecha;
+    const producto = catalogoHS[venta.codigo];
+    
+    if (producto) {
+      const totalVenta = producto.precio * venta.cantidad;
+      
+      if (!ventasPorFecha[fecha]) {
+        ventasPorFecha[fecha] = 0;
+      }
+      ventasPorFecha[fecha] += totalVenta;
+    }
+  });
+  
+  // Ordenar fechas y preparar datos
+  const fechasOrdenadas = Object.keys(ventasPorFecha).sort();
+  const totalesVendidos = fechasOrdenadas.map(fecha => ventasPorFecha[fecha]);
+  
+  const ctx1 = document.getElementById('totalVendido').getContext('2d');
+  new Chart(ctx1, {
+    type: 'line',
+    data: {
+      labels: fechasOrdenadas,
+      datasets: [{
+        label: 'Total Vendido ($)',
+        data: totalesVendidos,
+        backgroundColor: 'rgba(100, 111, 218, 0.1)',
+        borderColor: 'rgba(100, 111, 218, 1)',
+        borderWidth: 3,
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: 'rgba(100, 111, 218, 1)',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top'
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return '$' + formatearParaMostrar(value);
+            }
+          }
+        },
+        x: {
+          title: {
+            display: true,
+            text: 'Fecha'
+          }
+        }
+      }
+    }
+  });
+});
+
+// Gráfico Pie de Ganancias Netas (20% de ganancia)
+window.addEventListener("DOMContentLoaded", () => {
+  const historial = JSON.parse(localStorage.getItem('historialVentasHS')) || [];
+  const catalogoHS = JSON.parse(localStorage.getItem('catalogoHS')) || {};
+  
+  let totalVendido = 0;
+  let costoTotal = 0;
+  
+  historial.forEach(venta => {
+    const producto = catalogoHS[venta.codigo];
+    
+    if (producto) {
+      const precioVenta = producto.precio * venta.cantidad;
+      // El costo sería el precio menos el 20% de ganancia
+      // Si precio actual = costo + 20%, entonces costo = precio / 1.20
+      const costoProducto = (producto.precio / 1.20) * venta.cantidad;
+      
+      totalVendido += precioVenta;
+      costoTotal += costoProducto;
+    }
+  });
+  
+  const gananciaNeta = totalVendido - costoTotal;
+  
+  const ctx2 = document.getElementById('gananciasNetas').getContext('2d');
+  new Chart(ctx2, {
+    type: 'pie',
+    data: {
+      labels: ['Ganancia Neta (20%)', 'Costo del Producto (80%)'],
+      datasets: [{
+        data: [gananciaNeta, costoTotal],
+        backgroundColor: [
+          'rgba(40, 199, 143, 0.8)',  // Verde para ganancias
+          'rgba(100, 111, 218, 0.8)'  // Azul para costos
+        ],
+        borderColor: [
+          'rgba(40, 199, 143, 1)',
+          'rgba(100, 111, 218, 1)'
+        ],
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            padding: 20,
+            usePointStyle: true
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const label = context.label || '';
+              const value = context.parsed;
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percentage = ((value / total) * 100).toFixed(1);
+              return label + ': $' + formatearParaMostrar(value) + ' (' + percentage + '%)';
+            }
+          }
+        }
+      }
+    }
+  });
+});
+
+
+</script>
+      
+</body>
+</html>

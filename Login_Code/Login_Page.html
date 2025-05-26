@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/imagenes/logo_shortcut.png">
+    <link rel="stylesheet" href="./Login_Page_Style.css">
+    <title>Registro</title>
+</head>
+<body>
+    <div class="Contenedor_General">
+        <div class="Contenedor_Login">
+            <section class="Formulario">
+                <form onsubmit="registrarUsuario(event)">
+                <h4>¡Registrate!</h4>
+                    <input type="text"  class="controles" name="casilla_nombre" id="nombre_id" placeholder="Nombre" required>
+                        <br>
+                    <input type="text" class="controles" name="casilla_apellido" id="apellido_id" placeholder="Apellidos" required>
+                        <br>
+                    <input type="email" class="controles" name="casilla_correo" id="correo_id" placeholder="Correo" required>
+                        <br>
+                    <input type="password" class="controles" name="casilla_password" id="password_id" placeholder="Contraseña" required>
+                        <br>
+                    <input type="checkbox" name="" id="" required>   Estoy de acuerdo con los temrinos y condiciones
+                        <br>
+                    <input type="submit"  class="boton_submit" value="Registar">
+                        <br>
+                    <p><a href="/Login_Code/LogOn.html">¿Ya tienes cuenta?</a></p>
+                </form>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        function registrarUsuario(e) {
+            e.preventDefault();
+        
+            const nombre = document.getElementById("nombre_id").value;
+            const apellido = document.getElementById("apellido_id").value;
+            const correo = document.getElementById("correo_id").value;
+            const password = document.getElementById("password_id").value;
+        
+            const usuario = {
+                nombre,
+                apellido,
+                correo,
+                password
+            };
+        
+            // Guardar en localStorage
+            localStorage.setItem("usuarioRegistrado", JSON.stringify(usuario));
+        
+            // Redirigir al login
+            window.location.href = "/Login_Code/LogOn.html";
+        }
+        </script>
+        
+</body>
+</html>

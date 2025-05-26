@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="icon" href="/imagenes/logo_shortcut.png">
+  <link rel="stylesheet" href="style.css">
+  <title>Sistema de Facturación</title>
+</head>
+<body>
+  <div class="contenedor-principal">
+    <!-- Panel izquierdo (catálogo) -->
+    <div class="panel-izquierdo">
+      <div class="barra-busqueda">
+        <input type="search" placeholder="Buscar Productos" id="busquedaProductos">
+      </div>
+      <div class="contenedor-productos">
+        <div class="grid-productos" id="gridProductos"></div>
+      </div>
+      <div class="navegacion">
+        <button id="btnInicio">INICIO</button><button id="btnExportar">EXPORTAR</button><button id="btnImportar">IMPORTAR</button>
+      </div>
+    </div>
+    <!-- Panel derecho (facturación) -->
+    <div class="panel-derecho">
+      <div class="contenedor-facturacion">
+        <div class="facturacion-barra">
+          <input type="text" id="inputCodigo" placeholder="Ingrese código de producto" />
+        </div>
+        <div class="facturacion-contenido">
+          <div class="facturacion-paneles">
+            <div class="facturacion-items" id="facturacionItems">
+              <h3>Productos seleccionados</h3>
+              <p id="placeholderFacturacion">No hay productos seleccionados</p>
+            </div>
+            <div class="facturacion-total">
+              <h3>Resumen</h3>
+              <div>
+                <p><strong>Subtotal:</strong> $<span id="subtotal">0.00</span></p>
+                <p><strong>IVA (%):</strong><input type="number" id="inputIva" value="16" />% $<span id="iva">0.00</span></p>
+                <p><strong>TOTAL:</strong> $<span id="total">0.00</span></p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="facturacion-acciones">
+          <button id="btnCobrar">COBRAR</button>
+          <button id="btnBorrar">BORRAR</button>
+          <button id="btnCrear">CREAR</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal crear producto -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <div class="modal-header"><h2 id="modalTitle">Crear Producto</h2><button class="modal-close" id="modalClose">×</button></div>
+      <form id="formCrearProducto">
+        <input type="text" id="prodNombre" placeholder="Nombre" required />
+        <input type="number" id="prodPrecio" placeholder="Precio" step="0.01" required />
+        <input type="text" id="prodCodigo" placeholder="Código" required />
+        <input type="number" id="prodExistencias" placeholder="Existencias" required />
+        <input type="file" id="prodImagen" accept="image/*" />
+        <button type="submit" id="submitBtn">Agregar</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Input oculto para importar -->
+  <input type="file" id="importFile" accept="application/json" style="display: none">
+
+  <!-- Modal de resumen de compra -->
+  <div class="modal-overlay" id="modalResumen" style="display: none;">
+    <div class="modal" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2>Resumen de Compra</h2>
+        <button class="modal-close" id="cerrarResumen">×</button>
+      </div>
+      <div id="contenidoResumen" style="max-height: 300px; overflow-y: auto; margin-bottom: 1rem;">
+        <!-- Aquí se llenará el resumen -->
+      </div>
+      <div style="text-align: center; padding: 1rem; background-color: #f0f8ff; border-radius: 4px; margin-bottom: 1rem;">
+        <h3 style="color: #005f73; margin: 0;">¡Gracias por su compra!</h3>
+        <p style="margin: 0.5rem 0 0 0; color: #666;">Su pedido ha sido procesado exitosamente</p>
+      </div>
+      <div style="display: flex; gap: 0.5rem;">
+        <button id="comprarBtn" style="flex: 1; padding: 0.75rem; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem;">COMPRAR</button>
+        <button id="cerrarResumenBtn" style="flex: 1; padding: 0.75rem; background-color: #005f73; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem;">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+// === FUNCIÓN SIMPLE PARA OCULTAR DECIMALES Y AGREGAR SEPARADORES ===
+function formatearParaMostrar(numero) {
+  if (numero === null || numero === undefined || isNaN(numero)) {
+    return '0';
+  }
+  return Math.round(numero).toLocaleString('de-DE'); // Formato alemán usa puntos: 1.000.000
+}
+      const grid = document.getElementById('gridProductos');
+      const factItems = document.getElementById('facturacionItems');
+      const placeholderFact = document.getElementById('placeholderFacturacion');
+      const modalOverlay = document.getElementById('modalOverlay');
+      const modalClose = document.getElementById('modalClose');
+      const modalTitle = document.getElementById('modalTitle');
+      const submitBtn = document.getElementById('submitBtn');
+      const btnCrear = document.getElementById('btnCrear');
+      const btnBorrar = document.getElementById('btnBorrar');
+      const btnExportar = document.getElementById('btnExportar');
+      const btnImportar = document.getElementById('btnImportar');
+      const btnInicio = document.getElementById('btnInicio');
+      const btnCobrar = document.getElementById('btnCobrar');
+      const modalResumen = document.getElementById('modalResumen');
+      const cerrarResumen = document.getElementById('cerrarResumen');
+      const cerrarResumenBtn = document.getElementById('cerrarResumenBtn');
+      const comprarBtn = document.getElementById('comprarBtn');
+      const contenidoResumen = document.getElementById('contenidoResumen');
+      const importFile = document.getElementById('importFile');
+      const formCrear = document.getElementById('formCrearProducto');
+      const inputCodigo = document.getElementById('inputCodigo');
+      const inputIva = document.getElementById('inputIva');
+      const defaultImg = '/Imagenes/logo.avif';
+      let productCatalog = {};
+      const selectedItems = {};
+      let editingProductCode = null;
+
+      // Cargar catálogo desde localStorage
+      const saved = localStorage.getItem('catalogoHS');
+      if (saved) {
+        productCatalog = JSON.parse(saved);
+        Object.entries(productCatalog).forEach(([codigo, prod]) => {
+          addGridItem(codigo, prod);
+        });
+      }
+
+      // Guardar catálogo a localStorage
+      function saveCatalog() {
+        localStorage.setItem('catalogoHS', JSON.stringify(productCatalog));
+      }
+
+      // Añadir a grid
+      function addGridItem(codigo, prod) {
+        const prodDiv = document.createElement('div');
+        prodDiv.classList.add('producto'); 
+        prodDiv.dataset.id = codigo;
+        prodDiv.innerHTML = `
+          <div class="producto-buttons">
+            <button class="btn-edit" onclick="editProduct('${codigo}')" title="Editar producto">✏️</button>
+            <button class="btn-delete" onclick="deleteProduct('${codigo}')" title="Eliminar producto">🗑️</button>
+          </div>
+          <div class="producto-imagen">
+            <img src="${prod.imgSrc}" alt="${prod.nombre}">
+          </div>
+          <div class="producto-descripcion">
+            <p>${prod.nombre}</p>
+          </div>
+        `;
+        grid.appendChild(prodDiv);
+        
+        // Agregar event listener para seleccionar (evitando que se active con los botones)
+        prodDiv.addEventListener('click', (e) => {
+          if (!e.target.closest('.producto-buttons')) {
+            selectItem(codigo);
+          }
+        });
+      }
+
+      // Función para editar producto
+      window.editProduct = function(codigo) {
+        const prod = productCatalog[codigo];
+        if (!prod) return;
+        
+        editingProductCode = codigo;
+        modalTitle.textContent = 'Editar Producto';
+        submitBtn.textContent = 'Actualizar';
+        
+        // Llenar el formulario con los datos actuales
+        document.getElementById('prodNombre').value = prod.nombre;
+        document.getElementById('prodPrecio').value = prod.precio;
+        document.getElementById('prodCodigo').value = codigo;
+        document.getElementById('prodExistencias').value = prod.existencias || 0;
+        
+        modalOverlay.style.display = 'flex';
+      };
+
+      // Función para eliminar producto
+      window.deleteProduct = function(codigo) {
+        const prod = productCatalog[codigo];
+        if (!prod) return;
+        
+        const confirmDelete = confirm(`¿Estás seguro de que quieres eliminar el producto "${prod.nombre}"?\n\nEsta acción no se puede deshacer.`);
+        
+        if (confirmDelete) {
+          // Eliminar del catálogo
+          delete productCatalog[codigo];
+          saveCatalog();
+          
+          // Eliminar del DOM
+          const prodElement = document.querySelector(`[data-id="${codigo}"]`);
+          if (prodElement) {
+            prodElement.remove();
+          }
+          
+          // Si el producto estaba seleccionado en facturación, también eliminarlo
+          if (selectedItems[codigo]) {
+            selectedItems[codigo].el.remove();
+            delete selectedItems[codigo];
+            if (!Object.keys(selectedItems).length) {
+              factItems.innerHTML = '<h3>Productos seleccionados</h3><p id="placeholderFacturacion">No hay productos seleccionados</p>';
+            }
+            updateTotals();
+          }
+          
+          alert(`Producto "${prod.nombre}" eliminado correctamente.`);
+        }
+      };
+
+      // Controles modal
+      btnCrear.addEventListener('click', () => {
+        editingProductCode = null;
+        modalTitle.textContent = 'Crear Producto';
+        submitBtn.textContent = 'Agregar';
+        formCrear.reset();
+        modalOverlay.style.display = 'flex';
+      });
+      
+      modalClose.addEventListener('click', () => {
+        modalOverlay.style.display = 'none';
+        formCrear.reset();
+        editingProductCode = null;
+      });
+      
+      modalOverlay.addEventListener('click', e => { 
+        if (e.target === modalOverlay) {
+          modalOverlay.style.display = 'none';
+          formCrear.reset();
+          editingProductCode = null;
+        }
+      });
+
+      // Funciones de exportar e importar
+      btnExportar.addEventListener('click', () => {
+        const dataStr = JSON.stringify(productCatalog, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'catalogo_productos.json';
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      btnImportar.addEventListener('click', () => {
+        importFile.click();
+      });
+
+      importFile.addEventListener('change', (event) => {
+        const archivo = event.target.files[0];
+        if (!archivo) return;
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          try {
+            const datos = JSON.parse(e.target.result);
+            if (typeof datos === 'object' && datos !== null) {
+              productCatalog = datos;
+              saveCatalog();
+              // Limpiar grid y recargar productos
+              grid.innerHTML = '';
+              Object.entries(productCatalog).forEach(([codigo, prod]) => {
+                addGridItem(codigo, prod);
+              });
+              alert('Productos importados correctamente');
+            } else {
+              alert("Archivo inválido.");
+            }
+          } catch {
+            alert("No se pudo leer el archivo.");
+          }
+        };
+        reader.readAsText(archivo);
+        event.target.value = ''; // Limpiar input
+      });
+
+      // Botón inicio - limpiar búsqueda o recargar vista
+      btnInicio.addEventListener('click', () => {
+        document.getElementById('busquedaProductos').value = '';
+      });
+
+      // Botón cobrar - mostrar resumen
+      btnCobrar.addEventListener('click', () => {
+        if (Object.keys(selectedItems).length === 0) {
+          alert('No hay productos seleccionados para cobrar');
+          return;
+        }
+        mostrarResumenCompra();
+      });
+
+      // Cerrar modal resumen
+      cerrarResumen.addEventListener('click', () => {
+        modalResumen.style.display = 'none';
+      });
+
+      cerrarResumenBtn.addEventListener('click', () => {
+        modalResumen.style.display = 'none';
+      });
+
+      // Botón comprar - procesar compra y descontar inventario
+      comprarBtn.addEventListener('click', () => {
+        procesarCompra();
+      });
+
+      modalResumen.addEventListener('click', e => {
+        if (e.target === modalResumen) modalResumen.style.display = 'none';
+      });
+
+      // Función para procesar la compra
+      function procesarCompra() {
+        // Cargar inventario desde localStorage
+        let inventario = [];
+        const inventarioGuardado = localStorage.getItem('inventario');
+        if (inventarioGuardado) {
+          inventario = JSON.parse(inventarioGuardado);
+        }
+
+        let compraExitosa = true;
+        let productosInsuficientes = [];
+
+        // Verificar si hay suficientes existencias antes de procesar
+        Object.entries(selectedItems).forEach(([codigo, item]) => {
+          const productoInventario = inventario.find(p => p.codigo.toLowerCase() === codigo.toLowerCase());
+          if (productoInventario) {
+            if (productoInventario.existencias < item.count) {
+              compraExitosa = false;
+              productosInsuficientes.push({
+                nombre: productoInventario.nombre,
+                disponible: productoInventario.existencias,
+                solicitado: item.count
+              });
+            }
+          }
+        });
+
+        // Si no hay suficientes existencias, mostrar error
+        if (!compraExitosa) {
+          let mensaje = 'No hay suficientes existencias para:\n\n';
+          productosInsuficientes.forEach(prod => {
+            mensaje += `• ${prod.nombre}: Solicitado ${prod.solicitado}, Disponible ${prod.disponible}\n`;
+          });
+          alert(mensaje);
+          return;
+        }
+
+        // Si todo está bien, procesar la compra
+        Object.entries(selectedItems).forEach(([codigo, item]) => {
+          const productoInventario = inventario.find(p => p.codigo.toLowerCase() === codigo.toLowerCase());
+          if (productoInventario) {
+            productoInventario.existencias -= item.count;
+            // Si las existencias llegan a 0 o menos, ponerlas en 0
+            if (productoInventario.existencias < 0) {
+              productoInventario.existencias = 0;
+            }
+          }
+        });
+
+        // Guardar el inventario actualizado
+        localStorage.setItem('inventario', JSON.stringify(inventario));
+
+        // Guardar historial de ventas por producto y fecha chart.js
+        let historial = JSON.parse(localStorage.getItem('historialVentasHS')) || [];
+        const fechaHoy = new Date().toISOString().split('T')[0]; // Solo la fecha (YYYY-MM-DD)
+
+        let productosVendidos = Object.entries(selectedItems).map(([codigo, item]) => {
+          return {
+            codigo,
+            nombre: productCatalog[codigo].nombre,
+            cantidad: item.count,
+            fecha: fechaHoy
+          };
+        });
+
+        historial.push(...productosVendidos);
+        localStorage.setItem('historialVentasHS', JSON.stringify(historial));
+
+        // Limpiar la facturación
+        Object.values(selectedItems).forEach(i => i.el.remove());
+        Object.keys(selectedItems).forEach(k => delete selectedItems[k]);
+        factItems.innerHTML = '<h3>Productos seleccionados</h3><p id="placeholderFacturacion">No hay productos seleccionados</p>';
+        updateTotals();
+
+
+        // Cerrar modal y mostrar mensaje de éxito
+        modalResumen.style.display = 'none';
+        alert('¡Compra realizada exitosamente!\nEl inventario ha sido actualizado.');
+      };
+
+      // Función para mostrar resumen de compra
+      function mostrarResumenCompra() {
+  let html = '<div style="border: 1px solid #e0e0e0; border-radius: 4px; padding: 0.75rem; margin-bottom: 1rem;">';
+
+  Object.entries(selectedItems).forEach(([codigo, item]) => {
+    const prod = productCatalog[codigo];
+    const subtotalItem = prod.precio * item.count;
+    html += `
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;">
+        <div style="flex-grow: 1;">
+          <strong>${prod.nombre}</strong><br>
+          <small>Código: ${codigo} | Precio: $${formatearParaMostrar(prod.precio)}</small>
+        </div>
+        <div style="text-align: right;">
+          <div>Cant: ${item.count}</div>
+          <div><strong>$${formatearParaMostrar(subtotalItem)}</strong></div>
+        </div>
+      </div>
+    `;
+  });
+
+  html += '</div>';
+
+  let subtotal = 0;
+  Object.values(selectedItems).forEach(item => {
+    const precio = productCatalog[item.el.dataset.id].precio;
+    subtotal += precio * item.count;
+  });
+
+  const ivaP = parseFloat(inputIva.value) || 0;
+  const ivaVal = subtotal * ivaP / 100;
+  const totalVal = subtotal + ivaVal;
+
+  html += `
+    <div style="background-color: #f8f9fa; padding: 0.75rem; border-radius: 4px; border: 1px solid #e0e0e0;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+        <span>Subtotal:</span>
+        <span><strong>$${formatearParaMostrar(subtotal)}</strong></span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+        <span>IVA (${ivaP}%):</span>
+        <span><strong>$${formatearParaMostrar(ivaVal)}</strong></span>
+      </div>
+      <hr style="margin: 0.5rem 0; border: 1px solid #ccc;">
+      <div style="display: flex; justify-content: space-between; font-size: 1.1rem;">
+        <span><strong>TOTAL:</strong></span>
+        <span><strong>$${formatearParaMostrar(totalVal)}</strong></span>
+      </div>
+    </div>
+  `;
+
+  contenidoResumen.innerHTML = html;
+  modalResumen.style.display = 'flex';
+};
+
+      // Crear/Editar producto
+      formCrear.addEventListener('submit', e => {
+        e.preventDefault();
+        const nombre = document.getElementById('prodNombre').value.trim();
+        const precio = parseFloat(document.getElementById('prodPrecio').value);
+        const codigo = document.getElementById('prodCodigo').value.trim();
+        const existencias = parseInt(document.getElementById('prodExistencias').value) || 0;
+        const fileInput = document.getElementById('prodImagen');
+        
+        // Si estamos editando, usar la imagen actual si no se selecciona una nueva
+        let imgSrc = editingProductCode ? productCatalog[editingProductCode].imgSrc : defaultImg;
+        
+        const finish = () => {
+          if (editingProductCode) {
+            // Actualizar producto existente
+            const oldElement = document.querySelector(`[data-id="${editingProductCode}"]`);
+            if (oldElement) oldElement.remove();
+            
+            // Si el código cambió, eliminar la entrada antigua
+            if (editingProductCode !== codigo) {
+              delete productCatalog[editingProductCode];
+              // También actualizar en selectedItems si existe
+              if (selectedItems[editingProductCode]) {
+                selectedItems[codigo] = selectedItems[editingProductCode];
+                selectedItems[codigo].el.dataset.id = codigo;
+                delete selectedItems[editingProductCode];
+              }
+            }
+          }
+          
+          productCatalog[codigo] = { nombre, precio, existencias, imgSrc };
+          saveCatalog();
+          addGridItem(codigo, productCatalog[codigo]);
+          formCrear.reset(); 
+          modalOverlay.style.display = 'none';
+          editingProductCode = null;
+          
+          if (editingProductCode) {
+            alert('Producto actualizado correctamente');
+          }
+        };
+        
+        if (fileInput.files[0]) {
+          const reader = new FileReader();
+          reader.onload = () => { imgSrc = reader.result; finish(); };
+          reader.readAsDataURL(fileInput.files[0]);
+        } else finish();
+      });
+
+      // Seleccionar item
+      function selectItem(codigo) {
+        const prod = productCatalog[codigo];
+        if (!prod) return;
+        if (placeholderFact) placeholderFact.remove();
+        if (selectedItems[codigo]) {
+          selectedItems[codigo].count++;
+          selectedItems[codigo].el.querySelector('.item-count').value = selectedItems[codigo].count;
+        } else {
+          const itemDiv = document.createElement('div');
+          itemDiv.classList.add('fact-item'); itemDiv.dataset.id = codigo;
+          itemDiv.innerHTML = `<img src="${prod.imgSrc}" alt=""><div class="fact-item-info"><strong>${prod.nombre}</strong><span>$${formatearParaMostrar(prod.precio)}</span></div><div class="item-actions"><input type="number" class="item-count" value="1" min="1"><div class="remove-btn">🗑</div></div>`;
+          factItems.appendChild(itemDiv);
+          selectedItems[codigo] = { count: 1, el: itemDiv };
+          const inputCount = itemDiv.querySelector('.item-count');
+          inputCount.addEventListener('change', () => {
+            const v = parseInt(inputCount.value) || 1;
+            selectedItems[codigo].count = v; inputCount.value = v;
+            updateTotals();
+          });
+          itemDiv.querySelector('.remove-btn').addEventListener('click', () => {
+            delete selectedItems[codigo]; itemDiv.remove();
+            if (!Object.keys(selectedItems).length) factItems.innerHTML = '<h3>Productos seleccionados</h3><p id="placeholderFacturacion">No hay productos seleccionados</p>';
+            updateTotals();
+          });
+        }
+        updateTotals();
+      }
+
+      // Borrar todo
+      btnBorrar.addEventListener('click', () => {
+        Object.values(selectedItems).forEach(i => i.el.remove());
+        Object.keys(selectedItems).forEach(k => delete selectedItems[k]);
+        factItems.innerHTML = '<h3>Productos seleccionados</h3><p id="placeholderFacturacion">No hay productos seleccionados</p>';
+        updateTotals();
+      });
+
+      // Código input
+      inputCodigo.addEventListener('keypress', e => { if (e.key==='Enter') { e.preventDefault(); selectItem(inputCodigo.value.trim()); inputCodigo.value=''; }});
+      inputIva.addEventListener('change', updateTotals);
+
+      // Totales
+      function updateTotals() {
+  let subtotal = 0;
+  Object.values(selectedItems).forEach(item => {
+    const precio = productCatalog[item.el.dataset.id].precio;
+    subtotal += precio * item.count;
+  });
+
+  const ivaP = parseFloat(inputIva.value) || 0;
+  const ivaVal = subtotal * ivaP / 100;
+  const totalVal = subtotal + ivaVal;
+
+  document.getElementById('subtotal').textContent = formatearParaMostrar(subtotal);
+  document.getElementById('iva').textContent = formatearParaMostrar(ivaVal);
+  document.getElementById('total').textContent = formatearParaMostrar(totalVal);
+}
+});
+  </script>
+</body>
+</html>

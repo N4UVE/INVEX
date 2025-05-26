@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/imagenes/logo_shortcut.png">
+  <title>Gestor de Inventario</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #E8EAE9;
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 2rem;
+      min-height: 100vh;
+      color: rgba(13, 39, 80, 0.8);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 2rem;
+      color: rgba(13, 39, 80, 0.8);
+      font-size: 2.5rem;
+      font-weight: bold;
+    }
+
+    .neumorphic {
+      background-color: rgb(247, 247, 247);
+      border-radius: 30px;
+      box-shadow: rgba(255, 255, 255, 0.64) -20px -20px 30px 0px inset, 
+                  rgba(13, 39, 80, 0.16) 20px 20px 35px 0px inset, 
+                  rgb(255, 255, 255) -20px -20px 30px 0px, 
+                  rgba(13, 39, 80, 0.16) 8px 8px 35px 0px;
+      transition: all 0.3s ease;
+      margin-bottom: 2rem;
+    }
+
+    .neumorphic:hover {
+      transform: translateY(-2px);
+      box-shadow: rgba(255, 255, 255, 0.64) -25px -25px 35px 0px inset, 
+                  rgba(13, 39, 80, 0.16) 25px 25px 40px 0px inset, 
+                  rgb(255, 255, 255) -25px -25px 35px 0px, 
+                  rgba(13, 39, 80, 0.16) 10px 10px 40px 0px;
+    }
+
+    .search-box {
+      max-width: 600px;
+      margin: 0 auto 2rem;
+    }
+
+    .search-box .neumorphic {
+      padding: 1rem;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 0.75rem;
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 1rem;
+      color: rgba(13, 39, 80, 0.8);
+    }
+
+    .search-box input::placeholder {
+      color: rgba(13, 39, 80, 0.4);
+    }
+
+    .form-container {
+      max-width: 600px;
+      margin: 0 auto 2rem;
+      padding: 2rem;
+    }
+
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: bold;
+      color: rgba(13, 39, 80, 0.8);
+      margin-bottom: 0.5rem;
+    }
+
+    .input-neumorphic {
+      background-color: rgb(247, 247, 247);
+      border-radius: 15px;
+      box-shadow: rgba(255, 255, 255, 0.64) -10px -10px 20px 0px inset, 
+                  rgba(13, 39, 80, 0.16) 10px 10px 20px 0px inset;
+      margin-bottom: 1rem;
+      padding: 0.75rem 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .input-neumorphic:focus-within {
+      box-shadow: rgba(255, 255, 255, 0.64) -15px -15px 25px 0px inset, 
+                  rgba(13, 39, 80, 0.16) 15px 15px 25px 0px inset;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="file"] {
+      width: 100%;
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 1rem;
+      color: rgba(13, 39, 80, 0.8);
+    }
+
+    input[type="text"]::placeholder,
+    input[type="number"]::placeholder {
+      color: rgba(13, 39, 80, 0.4);
+    }
+
+    .btn {
+      background-color: rgb(247, 247, 247);
+      border-radius: 25px;
+      box-shadow: rgba(255, 255, 255, 0.64) -15px -15px 25px 0px inset, 
+                  rgba(13, 39, 80, 0.16) 15px 15px 25px 0px inset, 
+                  rgb(255, 255, 255) -15px -15px 25px 0px, 
+                  rgba(13, 39, 80, 0.16) 8px 8px 25px 0px;
+      margin: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: rgba(13, 39, 80, 0.7);
+      font-size: 0.9rem;
+      display: inline-block;
+    }
+
+    .btn:hover {
+      transform: scale(1.03);
+      box-shadow: rgba(255, 255, 255, 0.64) -20px -20px 30px 0px inset, 
+                  rgba(13, 39, 80, 0.16) 20px 20px 30px 0px inset, 
+                  rgb(255, 255, 255) -20px -20px 30px 0px, 
+                  rgba(13, 39, 80, 0.16) 10px 10px 30px 0px;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+      box-shadow: rgba(255, 255, 255, 0.64) -8px -8px 15px 0px inset, 
+                  rgba(13, 39, 80, 0.16) 8px 8px 15px 0px inset;
+    }
+
+    .error {
+      color: #d32f2f;
+      margin-top: 1rem;
+      font-weight: bold;
+      text-align: center;
+      background: rgba(233, 233, 233, 0.1);
+      padding: 0.5rem;
+      border-radius: 10px;
+    }
+
+    .table-container {
+      background-color: rgb(247, 247, 247);
+      border-radius: 30px;
+      box-shadow: rgba(255, 255, 255, 0.64) -20px -20px 30px 0px inset, 
+                  rgba(13, 39, 80, 0.16) 20px 20px 35px 0px inset, 
+                  rgb(255, 255, 255) -20px -20px 30px 0px, 
+                  rgba(13, 39, 80, 0.16) 8px 8px 35px 0px;
+      overflow: hidden;
+      margin: 2rem auto;
+      max-width: 1200px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: transparent;
+    }
+
+    th, td {
+      padding: 1rem;
+      text-align: center;
+      border-bottom: 1px solid rgba(13, 39, 80, 0.1);
+    }
+
+    th {
+      background: rgba(13, 39, 80, 0.1);
+      color: rgba(13, 39, 80, 0.8);
+      font-weight: bold;
+      border-bottom: 2px solid rgba(13, 39, 80, 0.2);
+    }
+
+    td {
+      color: rgba(13, 39, 80, 0.7);
+    }
+
+    tr:hover {
+      background: rgba(13, 39, 80, 0.05);
+    }
+
+    .icon-btn {
+      cursor: pointer;
+      font-size: 1.2rem;
+      margin: 0 5px;
+      padding: 0.3rem;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transition: all 0.3s ease;
+      display: inline-block;
+    }
+
+    .icon-btn:hover {
+      transform: scale(1.1);
+      background: rgba(255, 255, 255, 0.5);
+      box-shadow: 0 2px 8px rgba(13, 39, 80, 0.2);
+    }
+
+    img.product-img {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: 15px;
+      box-shadow: 0 2px 10px rgba(13, 39, 80, 0.2);
+    }
+
+    .button-container {
+      text-align: center;
+      margin-top: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Gestión de Inventario</h1>
+
+  <div class="neumorphic form-container">
+    <label for="nombre">Nombre del Producto:</label>
+    <div class="input-neumorphic">
+      <input type="text" id="nombre" placeholder="Ej: Lápiz" />
+    </div>
+
+    <label for="precio">Precio:</label>
+    <div class="input-neumorphic">
+      <input type="number" id="precio" placeholder="Ej: 700" />
+    </div>
+
+    <label for="codigo">Código Identificador:</label>
+    <div class="input-neumorphic">
+      <input type="text" id="codigo" placeholder="Ej: Lp" />
+    </div>
+
+    <label for="existencias">Número de Existencias:</label>
+    <div class="input-neumorphic">
+      <input type="number" id="existencias" placeholder="Ej: 100" />
+    </div>
+
+    <label for="imagen">Imagen del producto:</label>
+    <div class="input-neumorphic">
+      <input type="file" id="imagen" accept="image/*" />
+    </div>
+
+    <div class="button-container">
+      <button class="btn" onclick="agregarProducto()">Agregar Producto</button>
+      <button class="btn" onclick="exportarInventario()">Exportar Productos</button>
+      <button class="btn" onclick="document.getElementById('importFile').click()">Importar Productos</button>
+      <input type="file" id="importFile" accept="application/json" style="display: none" onchange="importarInventario(event)">
+    </div>
+
+    <div id="mensajeError" class="error"></div>
+  </div>
+
+  <div class="search-box">
+    <div class="neumorphic">
+      <input type="text" id="busqueda" placeholder="Buscar por código o nombre..." oninput="buscarProducto()">
+    </div>
+  </div>
+
+  <div class="table-container">
+    <table id="tablaInventario">
+      <thead>
+        <tr>
+          <th>Acciones</th>
+          <th>Imagen</th>
+          <th>Nombre</th>
+          <th>Precio</th>
+          <th>Código</th>
+          <th>Existencias</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+const nombreInput = document.getElementById("nombre");
+const precioInput = document.getElementById("precio");
+const codigoInput = document.getElementById("codigo");
+const existenciasInput = document.getElementById("existencias");
+const imagenInput = document.getElementById("imagen");
+const mensajeError = document.getElementById("mensajeError");
+const cuerpoTabla = document.querySelector("#tablaInventario tbody");
+const buscador = document.getElementById("busqueda");
+
+let catalogoFacturacion = {};
+const defaultImg = '/imagenes/logo.avif';
+
+window.onload = () => {
+  cargarCatalogoFacturacion();
+  mostrarInventario();
+};
+
+// Cargar el catálogo desde facturación
+function cargarCatalogoFacturacion() {
+  const catalogoGuardado = localStorage.getItem("catalogoHS");
+  if (catalogoGuardado) {
+    catalogoFacturacion = JSON.parse(catalogoGuardado);
+  }
+}
+
+// Guardar el catálogo actualizado
+function guardarCatalogoFacturacion() {
+  localStorage.setItem("catalogoHS", JSON.stringify(catalogoFacturacion));
+}
+
+// Convertir catálogo a formato de array para mostrar en tabla
+function obtenerInventarioComoArray() {
+  return Object.entries(catalogoFacturacion).map(([codigo, producto]) => ({
+    codigo: codigo,
+    nombre: producto.nombre,
+    precio: producto.precio,
+    existencias: producto.existencias || 0,
+    imagen: producto.imgSrc || defaultImg
+  }));
+}
+
+function agregarProducto() {
+  const nombre = nombreInput.value.trim();
+  const precio = parseFloat(precioInput.value);
+  const codigo = codigoInput.value.trim();
+  const existencias = parseInt(existenciasInput.value);
+
+  mensajeError.textContent = "";
+  if (!nombre || isNaN(precio) || !codigo || isNaN(existencias)) {
+    mensajeError.textContent = "Por favor completa todos los campos correctamente.";
+    return;
+  }
+
+  // Verificar si el código ya existe (sin distinguir mayúsculas/minúsculas)
+  const codigoExistente = Object.keys(catalogoFacturacion).find(
+    key => key.toLowerCase() === codigo.toLowerCase()
+  );
+  
+  if (codigoExistente) {
+    mensajeError.textContent = "Error: este producto ya existe (código duplicado).";
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    const imgSrc = imagenInput.files[0] ? reader.result : defaultImg;
+    
+    // Agregar al catálogo de facturación con la estructura correcta
+    catalogoFacturacion[codigo] = {
+      nombre: nombre,
+      precio: precio,
+      existencias: existencias,
+      imgSrc: imgSrc
+    };
+    
+    guardarCatalogoFacturacion();
+    mostrarInventario();
+    limpiarCampos();
+  };
+  
+  if (imagenInput.files[0]) {
+    reader.readAsDataURL(imagenInput.files[0]);
+  } else {
+    reader.onload();
+  }
+}
+
+function mostrarInventario(filtrados = null) {
+  cargarCatalogoFacturacion(); // Recargar por si hubo cambios
+  cuerpoTabla.innerHTML = "";
+  
+  const inventarioArray = filtrados || obtenerInventarioComoArray();
+  
+  inventarioArray.forEach((prod, idx) => {
+    const fila = document.createElement("tr");
+    fila.innerHTML = `
+      <td>
+        <span class="icon-btn" onclick="editarProducto('${prod.codigo}')">📝</span>
+        <span class="icon-btn" onclick="eliminarProducto('${prod.codigo}')">🗑️</span>
+      </td>
+      <td><img src="${prod.imagen || defaultImg}" class="product-img"></td>
+      <td>${prod.nombre}</td>
+      <td>$${prod.precio.toFixed(2)}</td>
+      <td>${prod.codigo}</td>
+      <td>${prod.existencias}</td>
+    `;
+    cuerpoTabla.appendChild(fila);
+  });
+}
+
+function eliminarProducto(codigo) {
+  const producto = catalogoFacturacion[codigo];
+  if (!producto) return;
+  
+  if (confirm(`¿Estás seguro de eliminar el producto "${producto.nombre}"?`)) {
+    delete catalogoFacturacion[codigo];
+    guardarCatalogoFacturacion();
+    mostrarInventario();
+  }
+}
+
+function editarProducto(codigo) {
+  const producto = catalogoFacturacion[codigo];
+  if (!producto) return;
+  
+  const nuevoNombre = prompt("Editar nombre:", producto.nombre);
+  if (nuevoNombre === null) return;
+
+  const nuevoPrecio = prompt("Editar precio:", producto.precio);
+  if (nuevoPrecio === null || isNaN(nuevoPrecio)) return;
+
+  const nuevasExistencias = prompt("Editar existencias:", producto.existencias || 0);
+  if (nuevasExistencias === null || isNaN(nuevasExistencias)) return;
+
+  // Actualizar el producto en el catálogo
+  catalogoFacturacion[codigo].nombre = nuevoNombre.trim();
+  catalogoFacturacion[codigo].precio = parseFloat(nuevoPrecio);
+  catalogoFacturacion[codigo].existencias = parseInt(nuevasExistencias);
+  
+  guardarCatalogoFacturacion();
+  mostrarInventario();
+}
+
+function buscarProducto() {
+  const texto = buscador.value.toLowerCase();
+  const inventarioArray = obtenerInventarioComoArray();
+  
+  const filtrados = inventarioArray.filter(p =>
+    p.nombre.toLowerCase().includes(texto) ||
+    p.codigo.toLowerCase().includes(texto)
+  );
+  
+  mostrarInventario(filtrados);
+}
+
+function exportarInventario() {
+  cargarCatalogoFacturacion();
+  const dataStr = JSON.stringify(catalogoFacturacion, null, 2);
+  const blob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'catalogo_productos.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importarInventario(event) {
+  const archivo = event.target.files[0];
+  if (!archivo) return;
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    try {
+      const datos = JSON.parse(e.target.result);
+      
+      // Verificar si es el formato del catálogo de facturación (objeto)
+      if (typeof datos === 'object' && datos !== null && !Array.isArray(datos)) {
+        catalogoFacturacion = datos;
+        guardarCatalogoFacturacion();
+        mostrarInventario();
+        alert("Catálogo importado correctamente");
+      } 
+      // Si es un array (formato antiguo), convertirlo
+      else if (Array.isArray(datos)) {
+        catalogoFacturacion = {};
+        datos.forEach(producto => {
+          if (producto.codigo) {
+            catalogoFacturacion[producto.codigo] = {
+              nombre: producto.nombre,
+              precio: producto.precio,
+              existencias: producto.existencias || 0,
+              imgSrc: producto.imagen || defaultImg
+            };
+          }
+        });
+        guardarCatalogoFacturacion();
+        mostrarInventario();
+        alert("Inventario convertido e importado correctamente");
+      } else {
+        alert("Archivo inválido.");
+      }
+    } catch {
+      alert("No se pudo leer el archivo.");
+    }
+  };
+  reader.readAsText(archivo);
+  event.target.value = ''; // Limpiar input
+}
+
+function limpiarCampos() {
+  nombreInput.value = "";
+  precioInput.value = "";
+  codigoInput.value = "";
+  existenciasInput.value = "";
+  imagenInput.value = "";
+}
+
+/**
+ * Formatea un número para mostrar con separadores de miles y decimales inteligentes
+ * @param {number} numero - El número a formatear
+ * @param {boolean} forzarDecimales - Si true, siempre muestra 2 decimales
+ * @returns {string} - Número formateado
+ */
+ function formatearNumero(numero, forzarDecimales = false) {
+  if (numero === null || numero === undefined || isNaN(numero)) {
+    return '0';
+  }
+  
+  // Si el número es entero o muy cerca de ser entero, no mostrar decimales
+  const esEntero = Number.isInteger(numero) || (numero % 1 < 0.01);
+  
+  if (esEntero && !forzarDecimales) {
+    return Math.round(numero).toLocaleString('es-CO'); // Formato colombiano: 1.000.000
+  } else {
+    return numero.toLocaleString('es-CO', {
+      minimumFractionDigits: forzarDecimales ? 2 : 0,
+      maximumFractionDigits: 2
+    });
+  }
+}
+
+/**
+ * Formatea específicamente para precios (siempre con símbolo de peso)
+ * @param {number} precio - El precio a formatear
+ * @param {boolean} forzarDecimales - Si true, siempre muestra decimales
+ * @returns {string} - Precio formateado con símbolo $
+ */
+function formatearPrecio(precio, forzarDecimales = false) {
+  return '$' + formatearNumero(precio, forzarDecimales);
+}
+
+/**
+ * Convierte un string formateado de vuelta a número para cálculos
+ * @param {string} stringNumero - String con formato (ej: "1.000,50")
+ * @returns {number} - Número limpio para cálculos
+ */
+function limpiarNumero(stringNumero) {
+  if (typeof stringNumero === 'number') return stringNumero;
+  
+  // Remover $ y espacios
+  let limpio = stringNumero.toString().replace(/[$\s]/g, '');
+  
+  // Convertir formato colombiano a formato JS
+  // Si tiene tanto puntos como comas, asumir formato: 1.000.000,50
+  if (limpio.includes('.') && limpio.includes(',')) {
+    limpio = limpio.replace(/\./g, '').replace(',', '.');
+  }
+  // Si solo tiene puntos y más de 3 dígitos después del último punto, son separadores de miles
+  else if (limpio.includes('.')) {
+    const partes = limpio.split('.');
+    if (partes[partes.length - 1].length > 2) {
+      // Son separadores de miles, no decimales
+      limpio = limpio.replace(/\./g, '');
+    } else {
+      // Es decimal, convertir a formato JS
+      limpio = limpio.replace(/\./g, '').slice(0, -partes[partes.length - 1].length) + '.' + partes[partes.length - 1];
+    }
+  }
+  
+  const numero = parseFloat(limpio);
+  return isNaN(numero) ? 0 : numero;
+}
+
+function mostrarInventario(filtrados = null) {
+  cargarCatalogoFacturacion();
+  cuerpoTabla.innerHTML = "";
+  
+  const inventarioArray = filtrados || obtenerInventarioComoArray();
+  
+  inventarioArray.forEach((prod, idx) => {
+    const fila = document.createElement("tr");
+    fila.innerHTML = `
+      <td>
+        <span class="icon-btn" onclick="editarProducto('${prod.codigo}')">📝</span>
+        <span class="icon-btn" onclick="eliminarProducto('${prod.codigo}')">🗑️</span>
+      </td>
+      <td><img src="${prod.imagen || defaultImg}" class="product-img"></td>
+      <td>${prod.nombre}</td>
+      <td>${formatearPrecio(prod.precio)}</td>
+      <td>${prod.codigo}</td>
+      <td>${formatearNumero(prod.existencias)}</td>
+    `;
+    cuerpoTabla.appendChild(fila);
+  });
+}
+
+// 4. PARA los items de facturación en FACTURACION.HTML:
+// Modificar donde se crea el itemDiv en selectItem():
+itemDiv.innerHTML = `
+  <img src="${prod.imgSrc}" alt="">
+  <div class="fact-item-info">
+    <strong>${prod.nombre}</strong>
+    <span>${formatearPrecio(prod.precio)}</span>
+  </div>
+  <div class="item-actions">
+    <input type="number" class="item-count" value="1" min="1">
+    <div class="remove-btn">🗑</div>
+  </div>
+`;
+  </script>
+</body>
+</html>
